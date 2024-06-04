@@ -1,0 +1,7 @@
+<% @title = "Search Results" %>
+<h1>Search Results</h1>
+<div class="grid">
+  <% @results.each do |result| %>
+    <%= erb :'_tweet', locals: { tweet: result } %>
+  <% end %>
+</div>

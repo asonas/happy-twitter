@@ -1,0 +1,34 @@
+<div class="grid-item">
+  <% if tweet['media'] && tweet['media'].any? %>
+    <% media = tweet['media'].first %>
+    <% cache_url = Tweet.cache_media(media) %>
+    <% if media['type'] == 'photo' %>
+      <img src="<%= cache_url %>" alt="Photo" data-toggle="modal" data-target="#tweetModal<%= tweet['original_tweet_id'] %>">
+    <% elsif media['type'] == 'video' %>
+      <video src="<%= cache_url %>" controls data-toggle="modal" data-target="#tweetModal<%= tweet['original_tweet_id'] %>"></video>
+    <% end %>
+  <% end %>
+
+  <div class="modal fade" id="tweetModal<%= tweet['original_tweet_id'] %>" tabindex="-1" role="dialog" aria-labelledby="tweetModalLabel<%= tweet['original_tweet_id'] %>" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tweetModalLabel<%= tweet['original_tweet_id'] %>">Tweet Media</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <% tweet['media'].each do |media| %>
+            <% cache_url = Tweet.cache_media(media) %>
+            <% if media['type'] == 'photo' %>
+              <img src="<%= cache_url %>" alt="Photo">
+            <% elsif media['type'] == 'video' %>
+              <video src="<%= cache_url %>" controls></video>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

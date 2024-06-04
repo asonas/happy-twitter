@@ -1,0 +1,17 @@
+<% @title = "Search Tweets" %>
+<div class="jumbotron">
+  <h1 class="display-4">Search Tweets</h1>
+  <form action="/search" method="get">
+    <div class="form-group">
+      <input type="text" name="query" class="form-control" placeholder="Search tweets...">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+</div>
+
+<h2>Recent Tweets</h2>
+<div class="grid">
+  <% @tweets.each do |tweet| %>
+    <%= erb :'_tweet', locals: { tweet: tweet } %>
+  <% end %>
+</div>

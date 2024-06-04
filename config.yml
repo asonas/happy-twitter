@@ -1,0 +1,9 @@
+database:
+  adapter: postgresql
+  host: localhost
+  database: happy_twitter
+  user: happy_twitter
+  password: happy_twitter
+
+elasticsearch:
+  url: http://localhost:9200
