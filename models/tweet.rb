@@ -35,6 +35,13 @@ class Tweet
     response['hits']['hits'].map { |hit| enrich_tweet(hit['_source']) }
   end
 
+  def self.fetch_recent_tweets_with_media(limit, offset)
+    @db_conn.exec_params(
+      "SELECT * FROM tweets WHERE media_url IS NOT NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+      [limit, offset]
+    )
+  end
+
   def self.search_tweets(query)
     response = @es_client.search(
       index: 'twitter_likes',
@@ -52,7 +59,7 @@ class Tweet
 
   def self.enrich_tweet(tweet)
     media_res = @db_conn.exec_params('SELECT m.* FROM media m INNER JOIN tweets t ON t.id = m.tweet_id WHERE t.original_tweet_id = $1', [tweet['original_tweet_id']])
-    tweet['media'] = media_res.map { |row| row }
+    tweet['media'] = media_res.map { |row| cache_media(row) }.compact
     tweet
   end
 
@@ -60,10 +67,10 @@ class Tweet
     media_path = File.join(CACHE_DIR, media['id'])
 
     if File.exist?(media_path)
-      "/images/#{media['id']}"
+      media['cached_url']= "http://10.0.2.200:4567/images/#{media['id']}"
     else
       MediaDownloadWorker.perform_async(media['url'], media_path)
-      media['url'] # キャッシュがない場合はオリジナルURLを返す
     end
+    media
   end
 end

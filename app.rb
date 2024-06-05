@@ -1,10 +1,7 @@
 require 'sinatra/base'
 require 'sinatra/reloader'
 require 'sidekiq'
-require 'sidekiq/api'
-require 'sidekiq/web'
 require 'elasticsearch'
-require 'json'
 require 'pg'
 require 'yaml'
 require_relative 'models/tweet'
@@ -29,22 +26,29 @@ end
 class App < Sinatra::Base
   configure :development do
     register Sinatra::Reloader
-    also_reload './views/*.erb'
-    also_reload './tweet.rb'
+    also_reload './models/tweet.rb'
   end
 
-  get '/' do
-    config = YAML.load_file('config.yml')
-    db_config = config['database']
-    Tweet.setup_db_connection(db_config)
-    @tweets = Tweet.fetch_recent_tweets(1000)
-    erb :index, layout: :layout
+  configure do
+    enable :cross_origin
+    set :allow_origin, '*'
+    set :allow_methods, [:get, :post, :options]
   end
 
-  get '/search' do
-    query = params[:query]
-    @results = Tweet.search_tweets(query)
-    erb :search, layout: :layout
+  before do
+    @config = YAML.load_file('config/config.yml')
+    @db_config = @config['database']
+    Tweet.setup_db_connection(@db_config)
+    headers 'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => ['OPTIONS', 'GET', 'POST'],
+            'Access-Control-Allow-Headers' => 'X-Requested-With, Content-Type, Accept, Authorization'
+  end
+
+  get '/api/tweets' do
+    content_type :json
+    offset = params[:offset].to_i || 0
+    tweets = Tweet.fetch_recent_tweets_with_media(100, offset)
+    tweets.to_json
   end
 
   get '/images/:media_id' do

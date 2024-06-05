@@ -6,6 +6,7 @@ gem 'redis'
 gem 'sidekiq'
 gem "sinatra"
 gem "sinatra-contrib"
+gem "sinatra-cross_origin"
 gem "pg"
 gem "pitchfork"
 gem 'yaml'

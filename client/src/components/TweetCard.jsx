@@ -9,7 +9,7 @@ const TweetCard = ({ tweet }) => {
       <div className="bg-white p-4 rounded shadow">
         {tweet.media && tweet.media.length > 0 && (
           <img
-            src={tweet.media[0].url}
+            src={tweet.media[0].cached_url || tweet.media[0].url}
             alt="Tweet media"
             onClick={() => setIsOpen(true)}
             className="cursor-pointer"
