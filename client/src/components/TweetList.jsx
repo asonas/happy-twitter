@@ -1,29 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import TweetCard from './TweetCard';
 
 const TweetList = ({ query }) => {
   const [tweets, setTweets] = useState([]);
+  const [offset, setOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchTweets = useCallback(async (newOffset) => {
+    setIsLoading(true);
+
+    try {
+      const res = await axios.get(`http://10.0.2.200:4567/api/tweets?offset=${newOffset}`);
+      setTweets((prevTweets) => [...prevTweets, ...res.data]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchTweets = async () => {
-      try {
-        const res = await axios.get('http://10.0.2.200:4567/api/tweets');
-        setTweets(res.data);
-      } catch (error) {
-        console.error(error);
+    fetchTweets(0);
+  }, [fetchTweets]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 200 && !isLoading) {
+        const newOffset = offset + 100;
+        setOffset(newOffset);
+        fetchTweets(newOffset);
       }
     };
 
-    fetchTweets();
-  }, [query]);
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [offset, fetchTweets, isLoading]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-1 sm:grid-cols-8 lg:grid-cols-8">
       {tweets
-        .filter(tweet => tweet.content.includes(query))
-        .map((tweet) => (
-          <TweetCard key={tweet.original_tweet_id} tweet={tweet} />
+        .filter(tweet => tweet.content.includes(query) && tweet.media && tweet.media.length > 0)
+        .map((tweet, index) => (
+          <TweetCard key={`${tweet.original_tweet_id}_${index}`} tweet={tweet} />
         ))}
     </div>
   );

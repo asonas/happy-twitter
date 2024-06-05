@@ -35,11 +35,36 @@ class Tweet
     response['hits']['hits'].map { |hit| enrich_tweet(hit['_source']) }
   end
 
-  def self.fetch_recent_tweets_with_media(limit, offset)
-    @db_conn.exec_params(
-      "SELECT * FROM tweets WHERE media_url IS NOT NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-      [limit, offset]
+  def self.fetch_recent_tweets_with_media(count, offset = 0)
+    Pf2.start(threads: [Thread.current])
+    response = @es_client.search(
+
+      index: 'twitter_likes',
+      body: {
+        query: {
+          match_all: {}
+        },
+        sort: [{ date: { order: 'desc' } }],
+        size: count,
+        from: offset
+      }
     )
+
+    r = response['hits']['hits'].map do |hit|
+      tweet = hit['_source']
+
+      tweet['media'] = fetch_media_for_tweet(tweet['id'])
+
+      enrich_tweet(tweet)
+    end
+    profile = Pf2.stop
+    File.write("my_program.pf2profile", profile)
+    r
+  end
+
+  def self.fetch_media_for_tweet(tweet_id)
+    result = @db_conn.exec_params("SELECT url, type FROM media WHERE tweet_id = $1", [tweet_id])
+    result.map { |row| { 'url' => row['url'], 'type' => row['type'] } }
   end
 
   def self.search_tweets(query)

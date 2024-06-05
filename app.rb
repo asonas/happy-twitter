@@ -29,12 +29,6 @@ class App < Sinatra::Base
     also_reload './models/tweet.rb'
   end
 
-  configure do
-    enable :cross_origin
-    set :allow_origin, '*'
-    set :allow_methods, [:get, :post, :options]
-  end
-
   before do
     @config = YAML.load_file('config/config.yml')
     @db_config = @config['database']
